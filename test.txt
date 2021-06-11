@@ -1,0 +1,3 @@
+this is a ${word}!
+This file looks like this unmodified:
+${file}

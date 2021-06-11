@@ -57,10 +57,28 @@ void print_help()
 	// TODO: implement help
 }
 
+
+char *outfile_name = NULL;
+char *outfile = NULL;
+size_t outfile_size;
+size_t outfile_current_size;
+int outfile_set = 0;
 void putchar_in_output(char c)
 {
-	putchar(c);
-	fflush(stdout);
+	if (outfile_set) {
+		if (outfile == NULL) {
+			outfile = malloc(sizeof(char) * 1024);
+			outfile_size = 1024;
+		}
+		if (outfile_current_size == outfile_size) {
+			outfile_size *= 2;
+			outfile = realloc(outfile, outfile_size);
+		}
+		outfile[outfile_current_size++] = c;
+	} else {
+		putchar(c);
+		fflush(stdout);
+	}
 }
 
 int main(int argc, char *argv[])
@@ -83,6 +101,10 @@ int main(int argc, char *argv[])
 	for (i = 2; i < argc; i++) {
 		if (argv[i][0] == '-') {
 			switch(argv[i][1]) {
+			case 'o':
+				outfile_name = argv[++i];
+				outfile_set = 1;
+				break;
 			case 'd':
 				if (i++ == argc) {
 					printf("supplied not enough arguments\n");
@@ -141,5 +163,14 @@ int main(int argc, char *argv[])
 		infile++;
 	}
 
+	if (outfile_set) {
+		FILE* file = fopen(outfile_name, "w");
+		if (file == NULL) {
+			printf("Failed to open %s for output!\n", outfile_name);
+			exit(1);
+		}
+		fwrite(outfile, outfile_size, 1, file);
+		fclose(file);
+	}
 	return 0;
 }
