@@ -28,7 +28,9 @@ struct table_entry {
 	char *value;
 };
 
-char *readfile(const char *filename)
+#define SWALLOW 1
+
+char *readfile(const char *filename, int flags)
 {
 	size_t size;
 	char *buffer;
@@ -47,6 +49,10 @@ char *readfile(const char *filename)
 
 	fread(buffer, size, 1, file);
 	
+	if ((flags & SWALLOW) != 0) {
+		if (buffer[size - 1] == '\n')
+			buffer[size - 1] = 0x00;
+	}
 
 	fclose(file);
 	return buffer;
@@ -81,8 +87,10 @@ void putchar_in_output(char c)
 	}
 }
 
+
 int main(int argc, char *argv[])
 {
+	int flags = 0;
 	size_t i;
 	size_t table_counter = 0;
 	struct table_entry *table = malloc((argc - 2) / 3 * sizeof(struct table_entry));
@@ -96,11 +104,18 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	
-	infile = readfile(argv[1]);
-	
+	infile = readfile(argv[1], 0);
+
+read_args:
 	for (i = 2; i < argc; i++) {
 		if (argv[i][0] == '-') {
 			switch(argv[i][1]) {
+			case 's':
+				if ((flags & SWALLOW) == 0) {
+					flags |= SWALLOW;
+					goto read_args;
+				}
+				break;
 			case 'o':
 				outfile_name = argv[++i];
 				outfile_set = 1;
@@ -122,7 +137,7 @@ int main(int argc, char *argv[])
 				table[table_counter].keysize = strlen(argv[i]);
 				table[table_counter].key = argv[i];
 				i++;
-				table[table_counter].value = readfile(argv[i]);
+				table[table_counter].value = readfile(argv[i], flags);
 				table_counter++;
 				break;
 			case 'h':
