@@ -184,7 +184,7 @@ read_args:
 			printf("Failed to open %s for output!\n", outfile_name);
 			exit(1);
 		}
-		fwrite(outfile, outfile_size, 1, file);
+		fwrite(outfile, outfile_current_size, 1, file);
 		fclose(file);
 	}
 	return 0;
